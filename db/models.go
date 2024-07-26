@@ -8,49 +8,52 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"fmt"
+	"time"
+
+	"github.com/google/uuid"
 )
 
-type PostsRole string
+type UsersRole string
 
 const (
-	PostsRoleAdmin   PostsRole = "admin"
-	PostsRoleAuthor  PostsRole = "author"
-	PostsRoleVisitor PostsRole = "visitor"
+	UsersRoleAdmin   UsersRole = "admin"
+	UsersRoleAuthor  UsersRole = "author"
+	UsersRoleVisitor UsersRole = "visitor"
 )
 
-func (e *PostsRole) Scan(src interface{}) error {
+func (e *UsersRole) Scan(src interface{}) error {
 	switch s := src.(type) {
 	case []byte:
-		*e = PostsRole(s)
+		*e = UsersRole(s)
 	case string:
-		*e = PostsRole(s)
+		*e = UsersRole(s)
 	default:
-		return fmt.Errorf("unsupported scan type for PostsRole: %T", src)
+		return fmt.Errorf("unsupported scan type for UsersRole: %T", src)
 	}
 	return nil
 }
 
-type NullPostsRole struct {
-	PostsRole PostsRole `json:"posts_role"`
-	Valid     bool      `json:"valid"` // Valid is true if PostsRole is not NULL
+type NullUsersRole struct {
+	UsersRole UsersRole `json:"users_role"`
+	Valid     bool      `json:"valid"` // Valid is true if UsersRole is not NULL
 }
 
 // Scan implements the Scanner interface.
-func (ns *NullPostsRole) Scan(value interface{}) error {
+func (ns *NullUsersRole) Scan(value interface{}) error {
 	if value == nil {
-		ns.PostsRole, ns.Valid = "", false
+		ns.UsersRole, ns.Valid = "", false
 		return nil
 	}
 	ns.Valid = true
-	return ns.PostsRole.Scan(value)
+	return ns.UsersRole.Scan(value)
 }
 
 // Value implements the driver Valuer interface.
-func (ns NullPostsRole) Value() (driver.Value, error) {
+func (ns NullUsersRole) Value() (driver.Value, error) {
 	if !ns.Valid {
 		return nil, nil
 	}
-	return string(ns.PostsRole), nil
+	return string(ns.UsersRole), nil
 }
 
 type Category struct {
@@ -79,7 +82,6 @@ type Post struct {
 	UserID    int32        `json:"user_id"`
 	Title     string       `json:"title"`
 	Content   string       `json:"content"`
-	Role      PostsRole    `json:"role"`
 	CreatedAt sql.NullTime `json:"created_at"`
 	UpdatedAt sql.NullTime `json:"updated_at"`
 }
@@ -94,6 +96,17 @@ type PostTag struct {
 	TagID  int32 `json:"tag_id"`
 }
 
+type Session struct {
+	ID           uuid.UUID `json:"id"`
+	Username     string    `json:"username"`
+	RefreshToken string    `json:"refresh_token"`
+	UserAgent    string    `json:"user_agent"`
+	ClientIp     string    `json:"client_ip"`
+	IsBlocked    bool      `json:"is_blocked"`
+	ExpiresAt    time.Time `json:"expires_at"`
+	CreatedAt    time.Time `json:"created_at"`
+}
+
 type Tag struct {
 	TagID int32  `json:"tag_id"`
 	Name  string `json:"name"`
@@ -104,7 +117,8 @@ type User struct {
 	Username     string       `json:"username"`
 	Email        string       `json:"email"`
 	PasswordHash string       `json:"password_hash"`
+	Role         UsersRole    `json:"role"`
 	LastLogin    sql.NullTime `json:"last_login"`
-	CreatedAt    sql.NullTime `json:"created_at"`
-	UpdatedAt    sql.NullTime `json:"updated_at"`
+	CreatedAt    time.Time    `json:"created_at"`
+	UpdatedAt    time.Time    `json:"updated_at"`
 }

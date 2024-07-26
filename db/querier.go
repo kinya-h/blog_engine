@@ -6,10 +6,17 @@ package db
 
 import (
 	"context"
+	"database/sql"
+
+	"github.com/google/uuid"
 )
 
 type Querier interface {
+	CreateSession(ctx context.Context, arg CreateSessionParams) (sql.Result, error)
+	CreateUser(ctx context.Context, arg CreateUserParams) (sql.Result, error)
 	FetchUsers(ctx context.Context) ([]FetchUsersRow, error)
+	GetSession(ctx context.Context, id uuid.UUID) (Session, error)
+	GetUser(ctx context.Context, username string) (User, error)
 }
 
 var _ Querier = (*Queries)(nil)

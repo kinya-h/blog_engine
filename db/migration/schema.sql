@@ -4,6 +4,7 @@ CREATE TABLE users (
     username VARCHAR(50) UNIQUE NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
+    role ENUM('admin', 'author', 'visitor') NOT NULL DEFAULT 'visitor',
     last_login datetime NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -15,7 +16,7 @@ CREATE TABLE  customers (
     name VARCHAR(255),
     phone VARCHAR(15) NOT NULL,
     email VARCHAR(255) UNIQUE,
-    PRIMARY KEY(id)
+    PRIMARY KEY(customer_id)
 );
 
 
@@ -33,7 +34,6 @@ CREATE TABLE posts (
     user_id INT NOT NULL,
     title VARCHAR(255) NOT NULL,
     content TEXT NOT NULL,
-    role ENUM('admin', 'author', 'visitor') NOT NULL DEFAULT 'visitor',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(user_id)
@@ -73,3 +73,18 @@ CREATE TABLE post_tags (
     FOREIGN KEY (post_id) REFERENCES posts(post_id),
     FOREIGN KEY (tag_id) REFERENCES tags(tag_id)
 );
+
+
+CREATE TABLE sessions (
+  id   varchar(36) NOT NULL,
+  username varchar(50) NOT NULL,
+  refresh_token varchar(300) NOT NULL,
+  user_agent varchar(255) NOT NULL,
+  client_ip varchar(50) NOT NULL,
+  is_blocked boolean NOT NULL DEFAULT false,
+  expires_at TIMESTAMP NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  PRIMARY KEY(id)
+);
+
+ALTER TABLE sessions ADD FOREIGN KEY (username) REFERENCES users (username);

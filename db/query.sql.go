@@ -8,11 +8,12 @@ package db
 import (
 	"context"
 	"database/sql"
+	"time"
 )
 
 const fetchUsers = `-- name: FetchUsers :many
 SELECT username, email,
-       last_login,created_at, updated_at
+       last_login,created_at,role, updated_at
        FROM users
 `
 
@@ -20,8 +21,9 @@ type FetchUsersRow struct {
 	Username  string       `json:"username"`
 	Email     string       `json:"email"`
 	LastLogin sql.NullTime `json:"last_login"`
-	CreatedAt sql.NullTime `json:"created_at"`
-	UpdatedAt sql.NullTime `json:"updated_at"`
+	CreatedAt time.Time    `json:"created_at"`
+	Role      UsersRole    `json:"role"`
+	UpdatedAt time.Time    `json:"updated_at"`
 }
 
 func (q *Queries) FetchUsers(ctx context.Context) ([]FetchUsersRow, error) {
@@ -38,6 +40,7 @@ func (q *Queries) FetchUsers(ctx context.Context) ([]FetchUsersRow, error) {
 			&i.Email,
 			&i.LastLogin,
 			&i.CreatedAt,
+			&i.Role,
 			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
