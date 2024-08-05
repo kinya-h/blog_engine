@@ -28,8 +28,8 @@ type Querier interface {
 	GetPosts(ctx context.Context) ([]GetPostsRow, error)
 	GetSession(ctx context.Context, id uuid.UUID) (Session, error)
 	GetUser(ctx context.Context, username string) (User, error)
-	UpdateCategory(ctx context.Context, arg UpdateCategoryParams) (sql.Result, error)
-	UpdatePost(ctx context.Context, arg UpdatePostParams) (sql.Result, error)
+	UpdateCategory(ctx context.Context, arg UpdateCategoryParams) error
+	UpdatePost(ctx context.Context, arg UpdatePostParams) error
 }
 
 var _ Querier = (*Queries)(nil)

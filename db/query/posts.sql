@@ -13,7 +13,7 @@ SELECT title,content,created_at,updated_at
 FROM posts
 WHERE post_id  = ?;
 
--- name: UpdatePost :execresult
+-- name: UpdatePost :exec
 UPDATE posts
 SET title = ?,
     content = ?

@@ -10,7 +10,7 @@ WHERE category_id = ?;
 -- name: GetCategories :many
 SELECT * FROM categories; 
 
--- name: UpdateCategory :execresult
+-- name: UpdateCategory :exec
 UPDATE categories 
 SET name = ?,
 description = ?

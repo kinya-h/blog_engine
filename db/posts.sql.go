@@ -104,7 +104,7 @@ func (q *Queries) GetPosts(ctx context.Context) ([]GetPostsRow, error) {
 	return items, nil
 }
 
-const updatePost = `-- name: UpdatePost :execresult
+const updatePost = `-- name: UpdatePost :exec
 UPDATE posts
 SET title = ?,
     content = ?
@@ -117,6 +117,7 @@ type UpdatePostParams struct {
 	PostID  int32  `json:"post_id"`
 }
 
-func (q *Queries) UpdatePost(ctx context.Context, arg UpdatePostParams) (sql.Result, error) {
-	return q.db.ExecContext(ctx, updatePost, arg.Title, arg.Content, arg.PostID)
+func (q *Queries) UpdatePost(ctx context.Context, arg UpdatePostParams) error {
+	_, err := q.db.ExecContext(ctx, updatePost, arg.Title, arg.Content, arg.PostID)
+	return err
 }

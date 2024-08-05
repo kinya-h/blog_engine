@@ -1,6 +1,7 @@
 package api
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -80,6 +81,14 @@ func (server *Server) getPost(w http.ResponseWriter, r *http.Request) {
 
 	post, err := server.db.GetPost(r.Context(), int32(postId))
 	if err != nil {
+
+		if err == sql.ErrNoRows {
+			emptyPost := make([]db.Post, 0) // Return [] instead of a struct with empty fields
+			w.WriteHeader(http.StatusOK)
+			json.NewEncoder(w).Encode(emptyPost)
+			return
+
+		}
 		http.Error(w, fmt.Sprintf("An error occured %s", err), http.StatusBadRequest)
 		return
 	}
@@ -111,20 +120,14 @@ func (server *Server) updatePost(w http.ResponseWriter, r *http.Request) {
 		PostID:  int32(postId),
 	}
 
-	result, err := server.db.UpdatePost(r.Context(), arg)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("An error occured %s", err), http.StatusInternalServerError)
-		return
-	}
-
-	updatedPostId, err := result.LastInsertId()
-	if err != nil {
-		http.Error(w, fmt.Sprintf("An error occured %s", err), http.StatusInternalServerError)
+	updateErr := server.db.UpdatePost(r.Context(), arg) // Will not error out in case the id is not found (default mysql behaviour).
+	if updateErr != nil {
+		http.Error(w, fmt.Sprintf("An error occured %s", updateErr), http.StatusInternalServerError)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(fmt.Sprintf("Post with id %d updated successfully. ", updatedPostId)))
+	w.Write([]byte(fmt.Sprintf("Post with id %d updated successfully. ", postId)))
 
 }
 

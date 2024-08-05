@@ -78,6 +78,7 @@ func (server *Server) getCategory(w http.ResponseWriter, r *http.Request) {
 
 		if err == sql.ErrNoRows {
 			emptyCategory := make([]db.Category, 0) // Return [] instead of a struct with empty fields
+			w.WriteHeader(http.StatusOK)
 			json.NewEncoder(w).Encode(emptyCategory)
 
 			return
@@ -101,7 +102,7 @@ func (server *Server) updateCategory(w http.ResponseWriter, r *http.Request) {
 
 	var req db.UpdateCategoryParams
 	decodeErr := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
+	if decodeErr != nil {
 		http.Error(w, fmt.Sprintf("An error occured %s", decodeErr), http.StatusBadRequest)
 		return
 	}
@@ -112,20 +113,14 @@ func (server *Server) updateCategory(w http.ResponseWriter, r *http.Request) {
 		CategoryID:  int32(categoryId),
 	}
 
-	result, err := server.db.UpdateCategory(r.Context(), arg)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("An error occured %s", err), http.StatusInternalServerError)
-		return
-	}
-
-	updatedPostId, err := result.LastInsertId()
-	if err != nil {
-		http.Error(w, fmt.Sprintf("An error occured %s", err), http.StatusInternalServerError)
+	updateErr := server.db.UpdateCategory(r.Context(), arg) // Will not error out in case the id is not found (default mysql behaviour).
+	if updateErr != nil {
+		http.Error(w, fmt.Sprintf("An error occured %s", updateErr), http.StatusInternalServerError)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(fmt.Sprintf("Category with id %d updated successfully. ", updatedPostId)))
+	w.Write([]byte(fmt.Sprintf("Category with id %d updated successfully. ", categoryId)))
 
 }
 
