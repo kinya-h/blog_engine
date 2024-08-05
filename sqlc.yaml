@@ -27,4 +27,12 @@ sql:
           - column: "*sessions.id"
             go_type: "github.com/google/uuid.UUID"
          
-         
+          - column: posts.created_at
+            go_type:
+              pointer: false
+              type: time.Time 
+              
+          - column: posts.updated_at
+            go_type:
+              pointer: false
+              type: time.Time 

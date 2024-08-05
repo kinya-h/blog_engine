@@ -62,6 +62,8 @@ func (server *Server) createUser(w http.ResponseWriter, r *http.Request) {
 	userId, err := result.LastInsertId()
 	if err != nil {
 		fmt.Printf("An Error Occured Creating user : %s", err.Error())
+		http.Error(w, fmt.Sprintf(" Error %s", err), http.StatusInternalServerError)
+		return
 	}
 
 	w.WriteHeader(http.StatusCreated)
@@ -85,7 +87,19 @@ type loginUserResponse struct {
 func (server *Server) loginUser(w http.ResponseWriter, r *http.Request) {
 	var req loginUserRequest
 
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("An error occured %s", err), http.StatusBadRequest)
+		return
+	}
+
 	user, err := server.db.GetUser(context.Background(), req.Username)
+	if err != nil {
+		fmt.Printf("an error occured : %s", err.Error())
+		http.Error(w, fmt.Sprintf("%s", err), http.StatusInsufficientStorage)
+		return
+
+	}
 
 	err = util.CheckPassword(req.PasswordHash, user.PasswordHash)
 	if err != nil {
@@ -96,8 +110,9 @@ func (server *Server) loginUser(w http.ResponseWriter, r *http.Request) {
 	accessToken, accessPayload, err := server.tokenMaker.CreateToken(
 		user.Username,
 		string(user.Role),
-		server.config.AccessTokenDuration,
+		time.Minute*15,
 	)
+
 	if err != nil {
 		http.Error(w, fmt.Sprintf("%s", err), http.StatusUnauthorized)
 		return
@@ -108,6 +123,7 @@ func (server *Server) loginUser(w http.ResponseWriter, r *http.Request) {
 		string(user.Role),
 		server.config.RefreshTokenDuration,
 	)
+
 	if err != nil {
 		http.Error(w, fmt.Sprintf("%s", err), http.StatusInternalServerError)
 		return
@@ -122,17 +138,18 @@ func (server *Server) loginUser(w http.ResponseWriter, r *http.Request) {
 		IsBlocked:    false,
 		ExpiresAt:    refreshPayload.ExpiredAt,
 	})
+
 	if err != nil {
 		http.Error(w, fmt.Sprintf("%s", err), http.StatusInternalServerError)
 		return
 	}
 
-	// _, err := session.LastInsertId()
+	id, err := session.LastInsertId()
 	if err != nil {
 		http.Error(w, fmt.Sprintf("%s", err), http.StatusInternalServerError)
 		return
 	}
-
+	print(id)
 	rsp := loginUserResponse{
 		// SessionID:             sessionId.,
 		AccessToken:           accessToken,
@@ -143,6 +160,7 @@ func (server *Server) loginUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
+
 	json.NewEncoder(w).Encode(rsp)
 
 }

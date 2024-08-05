@@ -29,43 +29,43 @@ func (server *Server) renewAccessToken(w http.ResponseWriter, r *http.Request) {
 
 	refreshPayload, err := server.tokenMaker.VerifyToken(req.RefreshToken)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("%s", err.Error()), http.StatusUnauthorized)
+		http.Error(w, fmt.Sprint(err.Error()), http.StatusUnauthorized)
 		return
 	}
 
 	session, err := server.db.GetSession(context.Background(), refreshPayload.ID)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			http.Error(w, fmt.Sprintf("%s", err.Error()), http.StatusNotFound)
+			http.Error(w, fmt.Sprint(err.Error()), http.StatusNotFound)
 			return
 		}
 
-		http.Error(w, fmt.Sprintf("%s", err.Error()), http.StatusInternalServerError)
+		http.Error(w, fmt.Sprint(err.Error()), http.StatusInternalServerError)
 		return
 	}
 
 	if session.IsBlocked {
 		err := fmt.Errorf("blocked session")
-		http.Error(w, fmt.Sprintf("%s", err.Error()), http.StatusUnauthorized)
+		http.Error(w, fmt.Sprint(err.Error()), http.StatusUnauthorized)
 
 		return
 	}
 
 	if session.Username != refreshPayload.Username {
 		err := fmt.Errorf("incorrect session user")
-		http.Error(w, fmt.Sprintf("%s", err.Error()), http.StatusUnauthorized)
+		http.Error(w, fmt.Sprint(err.Error()), http.StatusUnauthorized)
 		return
 	}
 
 	if session.RefreshToken != req.RefreshToken {
 		err := fmt.Errorf("mismatched session token")
-		http.Error(w, fmt.Sprintf("%s", err.Error()), http.StatusUnauthorized)
+		http.Error(w, fmt.Sprint(err.Error()), http.StatusUnauthorized)
 		return
 	}
 
 	if time.Now().After(session.ExpiresAt) {
 		err := fmt.Errorf("expired session")
-		http.Error(w, fmt.Sprintf("%s", err.Error()), http.StatusUnauthorized)
+		http.Error(w, fmt.Sprint(err.Error()), http.StatusUnauthorized)
 		return
 	}
 
@@ -75,7 +75,7 @@ func (server *Server) renewAccessToken(w http.ResponseWriter, r *http.Request) {
 		server.config.AccessTokenDuration,
 	)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("%s", err.Error()), http.StatusInternalServerError)
+		http.Error(w, fmt.Sprint(err.Error()), http.StatusInternalServerError)
 		return
 	}
 
@@ -83,7 +83,7 @@ func (server *Server) renewAccessToken(w http.ResponseWriter, r *http.Request) {
 		AccessToken:          accessToken,
 		AccessTokenExpiresAt: accessPayload.ExpiredAt,
 	}
-	http.Error(w, fmt.Sprintf("%s", err.Error()), http.StatusUnauthorized)
+	// http.Error(w, fmt.Sprint(err.Error()), http.StatusUnauthorized)
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(rsp)

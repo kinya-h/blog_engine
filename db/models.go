@@ -78,12 +78,12 @@ type Customer struct {
 }
 
 type Post struct {
-	PostID    int32        `json:"post_id"`
-	UserID    int32        `json:"user_id"`
-	Title     string       `json:"title"`
-	Content   string       `json:"content"`
-	CreatedAt sql.NullTime `json:"created_at"`
-	UpdatedAt sql.NullTime `json:"updated_at"`
+	PostID    int32     `json:"post_id"`
+	UserID    int32     `json:"user_id"`
+	Title     string    `json:"title"`
+	Content   string    `json:"content"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 type PostCategory struct {

@@ -78,7 +78,7 @@ CREATE TABLE post_tags (
 CREATE TABLE sessions (
   id   varchar(36) NOT NULL,
   username varchar(50) NOT NULL,
-  refresh_token varchar(300) NOT NULL,
+  refresh_token TEXT(300) NOT NULL,
   user_agent varchar(255) NOT NULL,
   client_ip varchar(50) NOT NULL,
   is_blocked boolean NOT NULL DEFAULT false,
