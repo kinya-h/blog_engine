@@ -90,15 +90,28 @@ func (server *Server) getPost(w http.ResponseWriter, r *http.Request) {
 }
 
 func (server *Server) updatePost(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	postId, err := strconv.Atoi(id)
 
-	var req db.UpdatePostParams
-	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("An error occured %s", err), http.StatusBadRequest)
+		http.Error(w, " id parameter Must be a number (id of the post)", http.StatusBadRequest)
 		return
 	}
 
-	result, err := server.db.UpdatePost(r.Context(), req)
+	var req db.UpdatePostParams
+	decodeError := json.NewDecoder(r.Body).Decode(&req)
+	if decodeError != nil {
+		http.Error(w, fmt.Sprintf("An error occured %s", decodeError), http.StatusBadRequest)
+		return
+	}
+
+	arg := db.UpdatePostParams{
+		Title:   req.Title,
+		Content: req.Content,
+		PostID:  int32(postId),
+	}
+
+	result, err := server.db.UpdatePost(r.Context(), arg)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("An error occured %s", err), http.StatusInternalServerError)
 		return

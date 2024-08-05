@@ -91,15 +91,28 @@ func (server *Server) getCategory(w http.ResponseWriter, r *http.Request) {
 }
 
 func (server *Server) updateCategory(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	categoryId, err := strconv.Atoi(id)
 
-	var req db.UpdateCategoryParams
-	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("An error occured %s", err), http.StatusBadRequest)
+		http.Error(w, "id parameter Must be a number (id of the category)", http.StatusBadRequest)
 		return
 	}
 
-	result, err := server.db.UpdateCategory(r.Context(), req)
+	var req db.UpdateCategoryParams
+	decodeErr := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("An error occured %s", decodeErr), http.StatusBadRequest)
+		return
+	}
+
+	arg := db.UpdateCategoryParams{
+		Name:        req.Name,
+		Description: req.Description,
+		CategoryID:  int32(categoryId),
+	}
+
+	result, err := server.db.UpdateCategory(r.Context(), arg)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("An error occured %s", err), http.StatusInternalServerError)
 		return
