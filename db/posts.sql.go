@@ -104,6 +104,43 @@ func (q *Queries) GetPosts(ctx context.Context) ([]GetPostsRow, error) {
 	return items, nil
 }
 
+const getPostsByCategory = `-- name: GetPostsByCategory :many
+SELECT p.post_id, p.user_id, p.title, p.content, p.created_at, p.updated_at 
+FROM posts p
+JOIN post_categories pc ON p.post_id = pc.post_id
+WHERE pc.category_id = ?
+`
+
+func (q *Queries) GetPostsByCategory(ctx context.Context, categoryID int32) ([]Post, error) {
+	rows, err := q.db.QueryContext(ctx, getPostsByCategory, categoryID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Post{}
+	for rows.Next() {
+		var i Post
+		if err := rows.Scan(
+			&i.PostID,
+			&i.UserID,
+			&i.Title,
+			&i.Content,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updatePost = `-- name: UpdatePost :exec
 UPDATE posts
 SET title = ?,

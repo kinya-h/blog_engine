@@ -15,9 +15,11 @@ type Querier interface {
 	CreateCategory(ctx context.Context, arg CreateCategoryParams) (sql.Result, error)
 	CreateComment(ctx context.Context, arg CreateCommentParams) (sql.Result, error)
 	CreatePost(ctx context.Context, arg CreatePostParams) (sql.Result, error)
+	CreatePostCategory(ctx context.Context, arg CreatePostCategoryParams) (sql.Result, error)
 	CreateSession(ctx context.Context, arg CreateSessionParams) (sql.Result, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (sql.Result, error)
 	DeleteCategory(ctx context.Context, categoryID int32) error
+	DeleteComment(ctx context.Context, commentID int32) error
 	DeletePost(ctx context.Context, postID int32) error
 	FetchUsers(ctx context.Context) ([]FetchUsersRow, error)
 	GetCategories(ctx context.Context) ([]Category, error)
@@ -25,11 +27,15 @@ type Querier interface {
 	GetComment(ctx context.Context, commentID int32) (GetCommentRow, error)
 	GetComments(ctx context.Context) (GetCommentsRow, error)
 	GetPost(ctx context.Context, postID int32) (GetPostRow, error)
+	GetPostCategory(ctx context.Context, postID int32) (PostCategory, error)
 	GetPosts(ctx context.Context) ([]GetPostsRow, error)
+	GetPostsByCategory(ctx context.Context, categoryID int32) ([]Post, error)
 	GetSession(ctx context.Context, id uuid.UUID) (Session, error)
 	GetUser(ctx context.Context, username string) (User, error)
 	UpdateCategory(ctx context.Context, arg UpdateCategoryParams) error
+	UpdateComment(ctx context.Context, arg UpdateCommentParams) error
 	UpdatePost(ctx context.Context, arg UpdatePostParams) error
+	UpdatePostCategory(ctx context.Context, arg UpdatePostCategoryParams) error
 }
 
 var _ Querier = (*Queries)(nil)

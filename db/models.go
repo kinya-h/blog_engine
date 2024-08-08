@@ -63,11 +63,11 @@ type Category struct {
 }
 
 type Comment struct {
-	CommentID int32        `json:"comment_id"`
-	PostID    int32        `json:"post_id"`
-	UserID    int32        `json:"user_id"`
-	Content   string       `json:"content"`
-	CreatedAt sql.NullTime `json:"created_at"`
+	CommentID int32     `json:"comment_id"`
+	PostID    int32     `json:"post_id"`
+	UserID    int32     `json:"user_id"`
+	Content   string    `json:"content"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 type Customer struct {

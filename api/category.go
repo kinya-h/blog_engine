@@ -68,10 +68,9 @@ func (server *Server) getCategory(w http.ResponseWriter, r *http.Request) {
 	categoryId, err := strconv.Atoi(id)
 
 	if err != nil {
-
 		http.Error(w, " id parameter Must be a number (id of the category)", http.StatusBadRequest)
-
 	}
+
 	category, err := server.db.GetCategory(r.Context(), int32(categoryId))
 
 	if err != nil {
@@ -80,9 +79,9 @@ func (server *Server) getCategory(w http.ResponseWriter, r *http.Request) {
 			emptyCategory := make([]db.Category, 0) // Return [] instead of a struct with empty fields
 			w.WriteHeader(http.StatusOK)
 			json.NewEncoder(w).Encode(emptyCategory)
-
 			return
 		}
+
 		http.Error(w, fmt.Sprintf("An Error Occured %s", err), http.StatusInternalServerError)
 	}
 
@@ -101,9 +100,8 @@ func (server *Server) updateCategory(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req db.UpdateCategoryParams
-	decodeErr := json.NewDecoder(r.Body).Decode(&req)
-	if decodeErr != nil {
-		http.Error(w, fmt.Sprintf("An error occured %s", decodeErr), http.StatusBadRequest)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, fmt.Sprintf("An error occured %s", err), http.StatusBadRequest)
 		return
 	}
 
@@ -113,9 +111,9 @@ func (server *Server) updateCategory(w http.ResponseWriter, r *http.Request) {
 		CategoryID:  int32(categoryId),
 	}
 
-	updateErr := server.db.UpdateCategory(r.Context(), arg) // Will not error out in case the id is not found (default mysql behaviour).
-	if updateErr != nil {
-		http.Error(w, fmt.Sprintf("An error occured %s", updateErr), http.StatusInternalServerError)
+	// Will not error out in case the id is not found (default mysql behaviour).
+	if err := server.db.UpdateCategory(r.Context(), arg); err != nil {
+		http.Error(w, fmt.Sprintf("An error occured %s", err), http.StatusInternalServerError)
 		return
 	}
 
@@ -133,8 +131,7 @@ func (server *Server) deleteCategory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	errr := server.db.DeleteCategory(r.Context(), int32(categoryId))
-	if errr != nil {
+	if err := server.db.DeleteCategory(r.Context(), int32(categoryId)); err != nil {
 		http.Error(w, "Sorry!,Unknown error occured", http.StatusInternalServerError)
 		return
 	}

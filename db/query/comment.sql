@@ -20,3 +20,10 @@ ON u.user_id = c.user_id
 JOIN posts p
 ON c.post_id = c.post_id
 WHERE c.comment_id = ?;
+
+-- name: UpdateComment :exec
+UPDATE comments 
+SET content = ? WHERE comment_id = ?;
+
+-- name: DeleteComment :exec
+DELETE FROM comments WHERE comment_id = ?;

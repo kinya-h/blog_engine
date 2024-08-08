@@ -25,6 +25,15 @@ func (q *Queries) CreateComment(ctx context.Context, arg CreateCommentParams) (s
 	return q.db.ExecContext(ctx, createComment, arg.PostID, arg.UserID, arg.Content)
 }
 
+const deleteComment = `-- name: DeleteComment :exec
+DELETE FROM comments WHERE comment_id = ?
+`
+
+func (q *Queries) DeleteComment(ctx context.Context, commentID int32) error {
+	_, err := q.db.ExecContext(ctx, deleteComment, commentID)
+	return err
+}
+
 const getComment = `-- name: GetComment :one
 SELECT p.title,c.content,u.username,u.email
 FROM comments c
@@ -80,4 +89,19 @@ func (q *Queries) GetComments(ctx context.Context) (GetCommentsRow, error) {
 		&i.Email,
 	)
 	return i, err
+}
+
+const updateComment = `-- name: UpdateComment :exec
+UPDATE comments 
+SET content = ? WHERE comment_id = ?
+`
+
+type UpdateCommentParams struct {
+	Content   string `json:"content"`
+	CommentID int32  `json:"comment_id"`
+}
+
+func (q *Queries) UpdateComment(ctx context.Context, arg UpdateCommentParams) error {
+	_, err := q.db.ExecContext(ctx, updateComment, arg.Content, arg.CommentID)
+	return err
 }

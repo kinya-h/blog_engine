@@ -52,6 +52,14 @@ func NewServer(config util.Config, db *db.Queries) (*Server, error) {
 	router.Get("/posts/{id}", server.getPost)
 	router.Patch("/posts/{id}", server.updatePost)
 	router.Delete("/posts/{id}", server.deletePost)
+	router.Delete("/posts/category/{id}", server.getPostsByCategory)
+
+	//comments route
+	router.Post("/comments", server.createComment)
+	router.Get("/comments", server.getComments)
+	router.Get("/comments/{id}", server.getComment)
+	router.Patch("/comments/{id}", server.updateComment)
+	router.Delete("/comments/{id}", server.deleteComment)
 
 	server.router = router
 	return server, nil

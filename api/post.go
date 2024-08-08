@@ -70,12 +70,33 @@ func (server *Server) getPosts(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func (server *Server) getPostsByCategory(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	categoryId, err := strconv.Atoi(id)
+
+	if err != nil {
+		http.Error(w, " id parameter Must be a number (id of the category)", http.StatusBadRequest)
+
+		return
+	}
+	posts, err := server.db.GetPostsByCategory(r.Context(), int32(categoryId))
+	if err != nil {
+		http.Error(w, fmt.Sprintf("An error occured %s", err), http.StatusBadRequest)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(posts)
+
+}
+
 func (server *Server) getPost(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	postId, err := strconv.Atoi(id)
 
 	if err != nil {
 		http.Error(w, " id parameter Must be a number (id of the post)", http.StatusBadRequest)
+
 		return
 	}
 
@@ -86,9 +107,10 @@ func (server *Server) getPost(w http.ResponseWriter, r *http.Request) {
 			emptyPost := make([]db.Post, 0) // Return [] instead of a struct with empty fields
 			w.WriteHeader(http.StatusOK)
 			json.NewEncoder(w).Encode(emptyPost)
-			return
 
+			return
 		}
+
 		http.Error(w, fmt.Sprintf("An error occured %s", err), http.StatusBadRequest)
 		return
 	}
@@ -103,14 +125,13 @@ func (server *Server) updatePost(w http.ResponseWriter, r *http.Request) {
 	postId, err := strconv.Atoi(id)
 
 	if err != nil {
-		http.Error(w, " id parameter Must be a number (id of the post)", http.StatusBadRequest)
+		http.Error(w, "id parameter Must be a number (id of the post)", http.StatusBadRequest)
 		return
 	}
 
 	var req db.UpdatePostParams
-	decodeError := json.NewDecoder(r.Body).Decode(&req)
-	if decodeError != nil {
-		http.Error(w, fmt.Sprintf("An error occured %s", decodeError), http.StatusBadRequest)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, fmt.Sprintf("An error occured %s", err), http.StatusBadRequest)
 		return
 	}
 
@@ -120,10 +141,11 @@ func (server *Server) updatePost(w http.ResponseWriter, r *http.Request) {
 		PostID:  int32(postId),
 	}
 
-	updateErr := server.db.UpdatePost(r.Context(), arg) // Will not error out in case the id is not found (default mysql behaviour).
-	if updateErr != nil {
-		http.Error(w, fmt.Sprintf("An error occured %s", updateErr), http.StatusInternalServerError)
+	// Will not error out in case the id (primary key) is not found (default mysql behaviour).
+	if err := server.db.UpdatePost(r.Context(), arg); err != nil {
+		http.Error(w, fmt.Sprintf("An error occured %s", err), http.StatusInternalServerError)
 		return
+
 	}
 
 	w.WriteHeader(http.StatusOK)
@@ -140,13 +162,11 @@ func (server *Server) deletePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	errr := server.db.DeletePost(r.Context(), int32(postId))
-	if errr != nil {
+	if err := server.db.DeletePost(r.Context(), int32(postId)); err != nil {
 		http.Error(w, "Sorry!,Unknown error occured", http.StatusInternalServerError)
 		return
 	}
 
 	w.WriteHeader(http.StatusNoContent)
 	w.Write([]byte(fmt.Sprintf("Post with id %d deleted successfully. ", postId)))
-
 }
