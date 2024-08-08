@@ -12,6 +12,10 @@ import (
 	"github.com/kinya-h/blog_engine/db"
 )
 
+type CreatePostRequest struct {
+	CategoryID int32 `json:"category_id"`
+	*db.CreatePostParams
+}
 type postResponse struct {
 	ID        int32     `json:"id"`
 	Title     string    `json:"title"`
@@ -32,14 +36,37 @@ func newPostResponse(post db.Post) postResponse {
 
 func (server *Server) createPost(w http.ResponseWriter, r *http.Request) {
 
-	var req db.CreatePostParams
+	var req CreatePostRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("An error occured %s", err), http.StatusBadRequest)
 		return
 	}
+	dbConn, err := server.GetDBConn()
+	if err != nil {
 
-	result, err := server.db.CreatePost(r.Context(), req)
+		fmt.Println("Error retrieving DB connection:", err)
+		http.Error(w, fmt.Sprintf("An error occured %s", err), http.StatusInternalServerError)
+		return
+	}
+
+	tx, err := dbConn.Begin()
+
+	if err != nil {
+		fmt.Println("Error creating a transaction :", err)
+		http.Error(w, fmt.Sprintf("An error occured. %s", err.Error()), http.StatusInternalServerError)
+		return
+	}
+
+	defer tx.Rollback()
+
+	qtx := server.db.WithTx(tx)
+	arg := db.CreatePostParams{
+		UserID:  req.UserID,
+		Title:   req.Title,
+		Content: req.Content,
+	}
+	result, err := qtx.CreatePost(r.Context(), arg)
 	if err != nil {
 		http.Error(w, fmt.Sprintf(" Error %s", err), http.StatusInternalServerError)
 		return
@@ -49,6 +76,16 @@ func (server *Server) createPost(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		fmt.Printf("An Error Occured Creating Post : %s", err.Error())
 		http.Error(w, fmt.Sprintf(" Error %s", err), http.StatusInternalServerError)
+		return
+	}
+
+	if _, err := qtx.CreatePostCategory(r.Context(), db.CreatePostCategoryParams{PostID: int32(postId), CategoryID: req.CategoryID}); err != nil {
+		http.Error(w, fmt.Sprintf(" Error %s", err), http.StatusInternalServerError)
+		return
+	}
+
+	if err := tx.Commit(); err != nil {
+		fmt.Printf("An Error Occured Creating Post : %s", err.Error())
 		return
 	}
 

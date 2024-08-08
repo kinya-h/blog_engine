@@ -1,6 +1,7 @@
 package api
 
 import (
+	"database/sql"
 	"fmt"
 	"net/http"
 
@@ -33,33 +34,43 @@ func NewServer(config util.Config, db *db.Queries) (*Server, error) {
 	router := chi.NewRouter()
 	router.Use(middleware.Logger)
 
-	//users route
-	router.Post("/users", server.createUser)
-	router.Post("/users/login", server.loginUser)
+	// Group the user routes
+	router.Route("/users", func(r chi.Router) {
+		r.Post("/", server.createUser)
+		r.Post("/login", server.loginUser)
+	})
 
+	// Group the token routes
 	router.Post("/tokens/renew_access", server.renewAccessToken)
 
-	//categories route
-	router.Post("/categories", server.createCategory)
-	router.Get("/categories", server.getCategories)
-	router.Get("/categories/{id}", server.getCategory)
-	router.Patch("/categories/{id}", server.updateCategory)
-	router.Delete("/categories/{id}", server.deleteCategory)
+	// Group the category routes
+	router.Route("/categories", func(r chi.Router) {
+		r.Post("/", server.createCategory)
+		r.Get("/", server.getCategories)
+		r.Get("/{id}", server.getCategory)
+		r.Patch("/{id}", server.updateCategory)
+		r.Delete("/{id}", server.deleteCategory)
+	})
 
-	//posts route
-	router.Post("/posts", server.createPost)
-	router.Get("/posts", server.getPosts)
-	router.Get("/posts/{id}", server.getPost)
-	router.Patch("/posts/{id}", server.updatePost)
-	router.Delete("/posts/{id}", server.deletePost)
-	router.Delete("/posts/category/{id}", server.getPostsByCategory)
+	// Group the post routes
+	router.Route("/posts", func(r chi.Router) {
+		r.Post("/", server.createPost)
+		r.Get("/", server.getPosts)
+		r.Get("/{id}", server.getPost)
+		r.Patch("/{id}", server.updatePost)
+		r.Delete("/{id}", server.deletePost)
+		//Get posts by category
+		r.Get("/category/{id}", server.getPostsByCategory)
+	})
 
-	//comments route
-	router.Post("/comments", server.createComment)
-	router.Get("/comments", server.getComments)
-	router.Get("/comments/{id}", server.getComment)
-	router.Patch("/comments/{id}", server.updateComment)
-	router.Delete("/comments/{id}", server.deleteComment)
+	// Group the comment routes
+	router.Route("/comments", func(r chi.Router) {
+		r.Post("/", server.createComment)
+		r.Get("/", server.getComments)
+		r.Get("/{id}", server.getComment)
+		r.Patch("/{id}", server.updateComment)
+		r.Delete("/{id}", server.deleteComment)
+	})
 
 	server.router = router
 	return server, nil
@@ -69,4 +80,13 @@ func NewServer(config util.Config, db *db.Queries) (*Server, error) {
 func (server *Server) Start() {
 	http.ListenAndServe(":3000", server.router)
 
+}
+
+func (s *Server) GetDBConn() (*sql.DB, error) {
+	dbtx := s.db.GetDBTX()
+	conn, ok := dbtx.(*sql.DB)
+	if !ok {
+		return nil, fmt.Errorf("failed to assert DBTX to *sql.DB")
+	}
+	return conn, nil
 }

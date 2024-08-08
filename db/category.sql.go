@@ -24,21 +24,6 @@ func (q *Queries) CreateCategory(ctx context.Context, arg CreateCategoryParams) 
 	return q.db.ExecContext(ctx, createCategory, arg.Name, arg.Description)
 }
 
-const createPostCategory = `-- name: CreatePostCategory :execresult
-INSERT INTO post_categories
-(post_id,category_id)
-VALUES (?,?)
-`
-
-type CreatePostCategoryParams struct {
-	PostID     int32 `json:"post_id"`
-	CategoryID int32 `json:"category_id"`
-}
-
-func (q *Queries) CreatePostCategory(ctx context.Context, arg CreatePostCategoryParams) (sql.Result, error) {
-	return q.db.ExecContext(ctx, createPostCategory, arg.PostID, arg.CategoryID)
-}
-
 const deleteCategory = `-- name: DeleteCategory :exec
 DELETE FROM categories
 WHERE category_id = ?
@@ -88,18 +73,6 @@ func (q *Queries) GetCategory(ctx context.Context, categoryID int32) (Category, 
 	return i, err
 }
 
-const getPostCategory = `-- name: GetPostCategory :one
-SELECT post_id, category_id FROM post_categories 
-WHERE post_id =?
-`
-
-func (q *Queries) GetPostCategory(ctx context.Context, postID int32) (PostCategory, error) {
-	row := q.db.QueryRowContext(ctx, getPostCategory, postID)
-	var i PostCategory
-	err := row.Scan(&i.PostID, &i.CategoryID)
-	return i, err
-}
-
 const updateCategory = `-- name: UpdateCategory :exec
 UPDATE categories 
 SET name = ?,
@@ -115,21 +88,5 @@ type UpdateCategoryParams struct {
 
 func (q *Queries) UpdateCategory(ctx context.Context, arg UpdateCategoryParams) error {
 	_, err := q.db.ExecContext(ctx, updateCategory, arg.Name, arg.Description, arg.CategoryID)
-	return err
-}
-
-const updatePostCategory = `-- name: UpdatePostCategory :exec
-UPDATE post_categories
-SET category_id = ?
-WHERE post_id = ?
-`
-
-type UpdatePostCategoryParams struct {
-	CategoryID int32 `json:"category_id"`
-	PostID     int32 `json:"post_id"`
-}
-
-func (q *Queries) UpdatePostCategory(ctx context.Context, arg UpdatePostCategoryParams) error {
-	_, err := q.db.ExecContext(ctx, updatePostCategory, arg.CategoryID, arg.PostID)
 	return err
 }
