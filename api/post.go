@@ -68,7 +68,7 @@ func (server *Server) createPost(w http.ResponseWriter, r *http.Request) {
 	}
 	result, err := qtx.CreatePost(r.Context(), arg)
 	if err != nil {
-		http.Error(w, fmt.Sprintf(" Error %s", err), http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf(" Error %s", err), http.StatusBadRequest)
 		return
 	}
 
@@ -80,7 +80,7 @@ func (server *Server) createPost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if _, err := qtx.CreatePostCategory(r.Context(), db.CreatePostCategoryParams{PostID: int32(postId), CategoryID: req.CategoryID}); err != nil {
-		http.Error(w, fmt.Sprintf(" Error %s", err), http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf(" Error %s", err), http.StatusBadRequest)
 		return
 	}
 

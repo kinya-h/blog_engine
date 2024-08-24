@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
 	"github.com/kinya-h/blog_engine/db"
 	"github.com/kinya-h/blog_engine/token"
 	"github.com/kinya-h/blog_engine/util"
@@ -33,7 +34,16 @@ func NewServer(config util.Config, db *db.Queries) (*Server, error) {
 
 	router := chi.NewRouter()
 	router.Use(middleware.Logger)
-
+	router.Use(cors.Handler(cors.Options{
+		// AllowedOrigins:   []string{"https://foo.com"}, // Use this to allow specific origin hosts
+		AllowedOrigins: []string{"https://*", "http://*"},
+		// AllowOriginFunc:  func(r *http.Request, origin string) bool { return true },
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: false,
+		MaxAge:           300, // Maximum value not ignored by any of major browsers
+	}))
 	// Group the user routes
 	router.Route("/users", func(r chi.Router) {
 		r.Post("/", server.createUser)
@@ -78,7 +88,7 @@ func NewServer(config util.Config, db *db.Queries) (*Server, error) {
 }
 
 func (server *Server) Start() {
-	http.ListenAndServe(":3000", server.router)
+	http.ListenAndServe(":6969", server.router)
 
 }
 

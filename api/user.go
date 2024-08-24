@@ -96,7 +96,7 @@ func (server *Server) loginUser(w http.ResponseWriter, r *http.Request) {
 	user, err := server.db.GetUser(context.Background(), req.Username)
 	if err != nil {
 		fmt.Printf("an error occured : %s", err.Error())
-		http.Error(w, fmt.Sprintf("%s", err), http.StatusInsufficientStorage)
+		http.Error(w, fmt.Sprintf("%s", err), http.StatusInternalServerError)
 		return
 
 	}
